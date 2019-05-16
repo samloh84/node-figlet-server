@@ -1,0 +1,30 @@
+version: "3.7"
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: figlet
+      POSTGRES_USER: figlet
+    networks:
+      - figlet
+  figlet:
+
+    image: node:latest
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/usr/src/app:Z
+    entrypoint:
+      - node
+      - index.js
+    working_dir: /usr/src/app
+    environment:
+      FIGLET_SERVER_DB_URL: postgres://figlet:password@db:5432/figlet
+    networks:
+      - figlet
+    depends_on:
+      - db
+
+networks:
+  figlet:
