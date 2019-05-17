@@ -145,7 +145,7 @@
         }
 
 
-        $.ajax('/figlet', {
+        $.ajax('/api/figlet', {
             success: function (data) {
                 _.each(data.figletTexts, function (figletText) {
                     $('#figlets').append($(Mustache.render(templates.figlet, figletText)));
@@ -166,7 +166,7 @@
                 word = '_random';
             }
 
-            $.ajax(`/figlet/${word}`, {
+            $.ajax(`/api/figlet/${word}`, {
                 success: function (data) {
                     console.log(data);
                     if (data.figletText.created) {
@@ -190,7 +190,7 @@
             let $parentCard = $this.parents('div.figlet-div');
 
 
-            $.ajax(`/figlet/${word}`, {
+            $.ajax(`/api/figlet/${word}`, {
                 type: 'DELETE',
                 success: function (data) {
                     show_alert(`Successfully deleted figlet: ${word}`, 'alert-success');

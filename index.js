@@ -19,7 +19,7 @@ const nodePath = require('path');
 const morgan = require('morgan');
 const cors = require('cors');
 
-
+const router = express.Router();
 
 class FigletText extends Sequelize.Model {
 }
@@ -42,7 +42,6 @@ if (!_.isEmpty(DB_URL)) {
 }
 
 app.use(morgan('combined'));
-
 
 
 app.use(body_parser.json({limit: '100MB'}));
@@ -69,10 +68,9 @@ if (_.isEmpty(CORS_WHITELISTED_DOMAINS)) {
 }
 
 
-
 app.use(express.static(nodePath.resolve(process.cwd(), 'static')));
 
-app.get('/status', function (req, res, next) {
+router.get('/status', function (req, res, next) {
     return res.jsonp({status: 'OK', hostname: os.hostname()});
 });
 
@@ -98,7 +96,7 @@ function list_figlets(req, res, next) {
 
 }
 
-app.get('/figlet', list_figlets);
+router.get('/figlet', list_figlets);
 
 
 function delete_figlet(req, res, next) {
@@ -122,7 +120,7 @@ function delete_figlet(req, res, next) {
 
 }
 
-app.delete('/figlet/:word', delete_figlet);
+router.delete('/figlet/:word', delete_figlet);
 
 
 function create_figlet(req, res, next) {
@@ -158,9 +156,10 @@ function create_figlet(req, res, next) {
         })
 }
 
-app.get('/figlet/:word', create_figlet);
-app.put('/figlet/:word', create_figlet);
+router.get('/figlet/:word', create_figlet);
+router.put('/figlet/:word', create_figlet);
 
+app.use('/api', router);
 
 app.use(function (req, res, next) {
     let error = new Error('Not Found');
