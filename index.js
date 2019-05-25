@@ -4,15 +4,21 @@ const os = require('os');
 const Promise = require('bluebird');
 const figlet = Promise.promisify(require('figlet'));
 
+
+const http = require('http');
+const https = require('https');
+
 const app = express();
 
 const body_parser = require('body-parser');
-
+const fs = require('fs');
 
 const Sequelize = require('sequelize');
 
-const DB_URL = _.get(process.env, 'FIGLET_SERVER_DB_URL');
-const PORT = _.toInteger(_.get(process.env, 'FIGLET_SERVER_PORT', 3000));
+const FIGLET_SERVER_DB_URL = _.get(process.env, 'FIGLET_SERVER_DB_URL');
+const FIGLET_SERVER_PORT = _.toInteger(_.get(process.env, 'FIGLET_SERVER_PORT'));
+const FIGLET_SERVER_TLS_KEY = _.get(process.env, 'FIGLET_SERVER_TLS_KEY');
+const FIGLET_SERVER_TLS_CERT = _.get(process.env, 'FIGLET_SERVER_TLS_CERT');
 
 const nodePath = require('path');
 
@@ -28,8 +34,8 @@ class FigletText extends Sequelize.Model {
 const words = require('./adjectives.json');
 
 let sequelize;
-if (!_.isEmpty(DB_URL)) {
-    sequelize = new Sequelize(DB_URL);
+if (!_.isEmpty(FIGLET_SERVER_DB_URL)) {
+    sequelize = new Sequelize(FIGLET_SERVER_DB_URL);
 
 
     FigletText.init({
@@ -40,6 +46,20 @@ if (!_.isEmpty(DB_URL)) {
 } else {
     sequelize = null;
 }
+
+
+let https_config = null;
+let port;
+if (!_.isEmpty(FIGLET_SERVER_TLS_KEY) && !_.isEmpty(FIGLET_SERVER_TLS_CERT)) {
+    https_config = {
+        key: fs.readFileSync(FIGLET_SERVER_TLS_KEY),
+        cert: fs.readFileSync(FIGLET_SERVER_TLS_CERT)
+    };
+    port = 443;
+} else {
+    port = 80;
+}
+
 
 app.use(morgan('combined'));
 
@@ -183,8 +203,15 @@ let syncPromise = Promise.resolve(sequelize !== null ? sequelize.sync() : null);
 
 syncPromise
     .then(function () {
-        app.listen(PORT, function () {
-            console.log(`Listening on port ${PORT}`);
+        let server;
+        if (!_.isNil(https_config)) {
+            server = https.createServer(https_config, app);
+        } else {
+            server = http.createServer(app);
+        }
+
+        server.listen(port, function () {
+            console.log(`Listening on port ${port}`);
         });
     });
 
